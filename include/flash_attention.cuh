@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
+#include <__clang_cuda_builtin_vars.h>
 #include <cuda.h>
 #include <sys/cdefs.h>
 
@@ -30,7 +31,7 @@ void __global__ flash_attn_fwd_kernel_wo_mask(const data_type __restrict__* Q,
                                               const data_type __restrict__* V,
                                               data_type __restrict__* O,
                                               data_type scale_factor) {
-  uint32_t block_idx = blockDim.x;
+  uint32_t block_idx = blockIdx.x;
   // TODO(shiwen): check this to ensure collesced memory access
   uint32_t thread_row_idx = threadIdx.y;
   uint32_t thread_col_idx = threadIdx.x;
@@ -79,7 +80,7 @@ void __global__ flash_attn_fwd_kernel_wo_mask(const data_type __restrict__* Q,
     // TODO(shiwen): use thread_tiling to gain more performance
     data_type thread_sim = 0;
     for (uint32_t k = 0; k < dim; k++) {
-      thread_sim += q_block[thread_row_idx][k] * k_block[thread_row_idx][k];
+      thread_sim += q_block[thread_row_idx][k] * k_block[thread_col_idx][k];
     }
     thread_sim *= scale_factor;
     sim[thread_row_idx][thread_col_idx] = thread_sim;
